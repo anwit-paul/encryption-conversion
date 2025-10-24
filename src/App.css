@@ -36,3 +36,96 @@
     transform: rotate(360deg);
   }
 }
+
+.left-padding-5 {
+  padding-left: 5rem;
+}
+
+.section.bottom {
+  margin-bottom: 10rem;
+}
+
+.message {
+  font-size: 1.2em;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 5px;
+  /* Use a dark background to make the light rainbow text pop */
+  background-color: #2c2c2c; 
+  
+  /* 1. Define the wide, repeating rainbow gradient */
+  background-image: 
+    linear-gradient(
+      to right, 
+      red, 
+      orange, 
+      yellow, 
+      green, 
+      blue, 
+      indigo, 
+      violet, 
+      red /* Repeat the color for smooth looping */
+    );
+  
+  /* 2. Set the background size to be much wider than the text container */
+  background-size: 400% auto;
+  
+  /* 3. Clip the background image to the text shape */
+  -webkit-background-clip: text;
+  background-clip: text;
+  
+  /* 4. Make the text transparent so the clipped background shows through */
+  color: transparent;
+
+  /* 5. Apply the animation */
+  animation: rainbow-shift 10s linear infinite;
+}
+
+/* Define the animation keyframes */
+@keyframes rainbow-shift {
+  to {
+    /* Moves the starting position of the gradient to create the shifting effect */
+    background-position: 400% center;
+  }
+}
+
+.build-by {
+  position: absolute;
+  top: 5rem;
+  right: 1rem;
+  font-size: 9em;
+  color: #888;
+  font-size: 1.2em; /* Adjusted for consistency, can be changed */
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 5px;
+  /* Use a dark background to make the light rainbow text pop */
+  background-color: #2c2c2c; /* This will be overridden by the gradient for the text itself */
+
+  /* 1. Define the wide, repeating rainbow gradient */
+  background-image:
+    linear-gradient(
+      to right,
+      red,
+      orange,
+      yellow,
+      green,
+      blue,
+      indigo,
+      violet,
+      red /* Repeat the color for smooth looping */
+    );
+
+  /* 2. Set the background size to be much wider than the text container */
+  background-size: 400% auto;
+
+  /* 3. Clip the background image to the text shape */
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  /* 4. Make the text transparent so the clipped background shows through */
+  color: transparent;
+
+  /* 5. Apply the animation */
+  animation: rainbow-shift 10s linear infinite;
+}

@@ -1,24 +1,6 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import "./App.css";
-
-// --- CAESAR CIPHER FUNCTIONS ---
-
-/**
- * Calculates the Caesar shift value from a PIN string.
- * It sums the ASCII codes of the characters in the PIN and
- * returns the result modulo 26 (for A-Z) or 256 (for all ASCII).
- * We'll use 256 since the text-to-PNG encoding uses the full ASCII range.
- * @param {string} pin The PIN string.
- * @returns {number} The shift value (0-255).
- */
-const getShiftFromPin = (pin) => {
-  if (!pin) return 0;
-  let shift = 0;
-  for (let i = 0; i < pin.length; i++) {
-    shift = (shift + pin.charCodeAt(i)) % 256;
-  }
-  return shift;
-};
+import { aesDecrypt, aesEncrypt } from "./components/aesEncryptDecrypt";
 
 /**
  * Encrypts/Decrypts text using the Caesar Cipher on all ASCII characters.
@@ -27,20 +9,6 @@ const getShiftFromPin = (pin) => {
  * @param {boolean} isEncrypt True for encryption, False for decryption.
  * @returns {string} The processed text.
  */
-const caesarCipher = (text, shift, isEncrypt) => {
-  if (!text || shift === 0) return text;
-
-  const finalShift = isEncrypt ? shift : (256 - shift) % 256;
-  let result = "";
-
-  for (let i = 0; i < text.length; i++) {
-    const charCode = text.charCodeAt(i);
-    // Ensure the shift is applied within the 256 ASCII range (0-255)
-    const newCharCode = (charCode + finalShift) % 256;
-    result += String.fromCharCode(newCharCode);
-  }
-  return result;
-};
 
 // --- REACT COMPONENT ---
 
@@ -53,6 +21,7 @@ function App() {
   const [decodedText, setDecodedText] = useState("");
   const [message, setMessage] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [buildByVisible, setBuildByVisible] = useState(false);
 
   // Refs
   const fileInputRef = useRef(null);
@@ -68,7 +37,6 @@ function App() {
     });
   };
 
-  // --- ENCODING: Text -> Caesar Cipher -> PNG ---
   const handleEncode = async () => {
     let contentToEncode = "";
 
@@ -91,14 +59,14 @@ function App() {
       }
     }
 
-    // --- PIN and Encryption Step (NEW) ---
+    // --- PIN and Encryption Step (CORRECTED AES LOGIC) ---
     const pin = prompt("Enter PIN for encryption:");
     if (!pin) {
       setMessage("Encryption cancelled: PIN is required.");
       return;
     }
-    const shift = getShiftFromPin(pin);
-    const encryptedContent = caesarCipher(contentToEncode, shift, true);
+
+    const encryptedContent = await aesEncrypt(contentToEncode, pin);
     // -------------------------------------
 
     setIsProcessing(true);
@@ -154,19 +122,20 @@ function App() {
     }
   };
 
-  // --- DECODING: PNG -> Caesar Cipher -> Text ---
+  // --- DECODING: PNG -> AES Decrypt -> Text ---
   const handleDecode = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // --- PIN and Decryption Setup Step (NEW) ---
+    // --- PIN and Decryption Setup Step (CORRECTED AES LOGIC) ---
     const pin = prompt("Enter PIN to decrypt the text:");
     if (!pin) {
       setMessage("Decryption cancelled: PIN is required.");
       if (fileInputRef.current) fileInputRef.current.value = null;
       return;
     }
-    const shift = getShiftFromPin(pin);
+    // REMOVE THE CAESAR CIPHER SHIFT LINE
+    // const shift = getShiftFromPin(pin);
     // -------------------------------------
 
     setIsProcessing(true);
@@ -183,14 +152,17 @@ function App() {
       // 1. Convert PNG to Encrypted Text
       const encryptedText = await imageToText(file);
 
-      // 2. Decrypt the Text (NEW)
-      const decryptedText = caesarCipher(encryptedText, shift, false);
+      // 2. Decrypt the Text (CORRECTED AES LOGIC)
+      // Await the AES decryption result, REMOVE THE REDECLARATION
+      const decryptedText = await aesDecrypt(encryptedText, pin);
+      // REMOVE THE CAESAR CIPHER DECRYPTION LINE
+      // const decryptedText = caesarCipher(encryptedText, shift, false);
 
       setDecodedText(decryptedText);
       setMessage("Image decoded and decrypted successfully!");
     } catch (error) {
       console.error("Decoding Error:", error);
-      setMessage(`Error decoding/decrypting: ${error.message}`);
+      setMessage(`Error decoding/decrypting`);
     } finally {
       setIsProcessing(false);
       if (fileInputRef.current) {
@@ -273,11 +245,20 @@ function App() {
     }
   }, [isTextFileMode]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setBuildByVisible(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [buildByVisible]);
+
   // --- JSX ---
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Matrix Inversion and AES 256 Golden 🔒</h1>
+        <h1 onClick={() => setBuildByVisible(!buildByVisible)}>
+          Matrix Inversion and AES 256 Golden 🔒
+        </h1>
         <p style={{ color: "yellow" }}>
           **NOTE: PIN prompts will appear before Encode/Decode actions.**
         </p>
@@ -348,9 +329,10 @@ function App() {
         <hr style={{ width: "80%" }} />
 
         {/* --- DECODER SECTION --- */}
-        <div className="section">
+        <div className="section bottom">
           <h2>Decode & Decrypt PNG to Text</h2>
           <input
+            className="left-padding-5"
             type="file"
             accept="image/png"
             onChange={handleDecode}
@@ -372,6 +354,11 @@ function App() {
           )}
         </div>
       </header>
+      {buildByVisible && (
+        <div className="build-by">
+          <p>Built by Anwit Paul - 2024</p>
+        </div>
+      )}
     </div>
   );
 }
